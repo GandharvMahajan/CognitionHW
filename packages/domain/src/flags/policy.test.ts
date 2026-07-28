@@ -1,18 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import {
   assertFreshVersion,
+  flagRequiresApproval,
   isEnabledForSubject,
-  requiresApproval,
   validateRollout,
 } from './policy.js';
 import { canTransitionFlagChange } from './state-machine.js';
 
 describe('flag policy', () => {
   it('requires approval for production changes only', () => {
-    expect(requiresApproval('production', 'TOGGLE')).toBe(true);
-    expect(requiresApproval('production', 'ROLLOUT')).toBe(true);
-    expect(requiresApproval('staging', 'TOGGLE')).toBe(false);
-    expect(requiresApproval('production', 'KILL_SWITCH')).toBe(false);
+    expect(flagRequiresApproval('production', 'TOGGLE')).toBe(true);
+    expect(flagRequiresApproval('production', 'ROLLOUT')).toBe(true);
+    expect(flagRequiresApproval('staging', 'TOGGLE')).toBe(false);
+    expect(flagRequiresApproval('production', 'KILL_SWITCH')).toBe(false);
   });
 
   it('enforces optimistic concurrency', () => {

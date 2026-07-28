@@ -18,7 +18,7 @@ export interface FlagState {
 }
 
 /** Production changes always go through maker-checker approval. */
-export function requiresApproval(environment: FlagEnvironment, kind: FlagChangeKind): boolean {
+export function flagRequiresApproval(environment: FlagEnvironment, kind: FlagChangeKind): boolean {
   if (kind === 'KILL_SWITCH') return false; // emergency path, audited instead
   return environment === 'production';
 }

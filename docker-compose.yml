@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fintech
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "pnpm --filter @fintech/db exec prisma migrate deploy && pnpm --filter @fintech/db run seed"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/fintech?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: pnpm --filter @fintech/api start
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/fintech?schema=public
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me-dev-secret}
+      API_PORT: '4000'
+      CORS_ORIGIN: http://localhost:3000
+      NODE_ENV: development
+    ports:
+      - '4000:4000'
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: web
+    command: pnpm --filter @fintech/web start
+    environment:
+      NODE_ENV: production
+      WEB_PORT: '3000'
+      API_INTERNAL_URL: http://api:4000
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:

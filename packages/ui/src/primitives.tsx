@@ -78,7 +78,7 @@ export function Field({ label, htmlFor, children, hint }: { label: string; htmlF
 export function ErrorMessage({ children }: { children: ReactNode }) {
   if (!children) return null;
   return (
-    <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+    <p role="alert" data-testid="form-error" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
       {children}
     </p>
   );

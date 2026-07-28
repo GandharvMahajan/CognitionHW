@@ -12,7 +12,7 @@ import { prisma } from '../../services/db.js';
 
 const loginLimiter = rateLimit({
   windowMs: 60_000,
-  limit: process.env.NODE_ENV === 'test' ? 1000 : 10,
+  limit: Number(process.env.LOGIN_RATE_LIMIT_PER_MINUTE ?? (process.env.NODE_ENV === 'test' ? 1000 : 10)),
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: { code: 'RATE_LIMITED', message: 'Too many login attempts' } },

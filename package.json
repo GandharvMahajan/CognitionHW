@@ -1,0 +1,29 @@
+{
+  "name": "fintech-ops-console",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "pnpm -r --filter=./packages/** build && pnpm --filter @fintech/api build && pnpm --filter @fintech/web build",
+    "dev": "pnpm --parallel --filter @fintech/api --filter @fintech/web dev",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:unit": "pnpm --filter @fintech/domain test",
+    "test:api": "pnpm --filter @fintech/api test",
+    "test:e2e": "pnpm --filter @fintech/e2e test",
+    "db:migrate": "pnpm --filter @fintech/db migrate:deploy",
+    "db:seed": "pnpm --filter @fintech/db seed",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.3"
+  }
+}

@@ -602,6 +602,7 @@ function CaseDrawer({
   return (
     <div className="drawer-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <aside className="drawer" role="dialog" aria-modal="true" aria-labelledby="case-title" data-testid="case-drawer">
+        <div className="drawer-body">
         <div className="drawer-head">
           <div><span className="eyebrow">{item.id}</span><h2 id="case-title">{item.customer_name}</h2><p>{item.entity_type} · {item.country}</p></div>
           <button className="close-button" type="button" onClick={onClose} aria-label="Close case details">×</button>
@@ -631,6 +632,7 @@ function CaseDrawer({
             <label>Decision rationale<textarea value={note} onChange={(event) => onNote(event.target.value)} placeholder="Document the evidence and policy basis for this decision..." data-testid="case-note" /></label>
           </div>
         ) : <div className="closed-banner">This case is closed. Its decision snapshot is immutable.</div>}
+        </div>
         <div className="drawer-actions">
           <button className="secondary-button" type="button" onClick={onClose}>Cancel</button>
           {!item.assignee && !closed ? <button className="secondary-button" type="button" onClick={onAssign}>Assign to me</button> : null}

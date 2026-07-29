@@ -453,7 +453,7 @@ tbody tr:hover { background: #fbfcf9; }
 .drawer-backdrop, .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 90;
   display: flex;
   justify-content: flex-end;
   background: rgba(11, 25, 21, .46);
@@ -543,7 +543,10 @@ tbody tr:hover { background: #fbfcf9; }
 .decision-box select, .form-grid input, .form-grid select { height: 38px; padding: 0 10px; }
 .decision-box textarea, .reason-field textarea, .form-grid textarea { min-height: 78px; resize: vertical; padding: 10px; line-height: 1.45; }
 .closed-banner { margin-top: 20px; padding: 14px; border-radius: 8px; background: #eef1ed; color: #627069; font-size: 9px; text-align: center; }
-.drawer-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 9px; margin: 24px -27px -95px; padding: 14px 27px; border-top: 1px solid #dce2da; background: rgba(251,252,248,.96); backdrop-filter: blur(12px); }
+.drawer-actions { display: flex; justify-content: flex-end; gap: 9px; margin: 24px -27px 0; padding: 14px 27px; border-top: 1px solid #dce2da; background: rgba(251,252,248,.96); }
+.drawer[data-testid="case-drawer"] { display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+.drawer-body { min-height: 0; overflow-y: auto; padding: 25px 27px 24px; }
+.drawer[data-testid="case-drawer"] .drawer-actions { flex: 0 0 auto; margin: 0; padding: 14px 27px calc(14px + env(safe-area-inset-bottom)); }
 
 .money-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; overflow: hidden; margin: 5px 0 0; border: 1px solid #dfe4dd; border-radius: 8px; background: #dfe4dd; }
 .money-summary div { display: flex; flex-direction: column; padding: 12px; background: #fff; }
@@ -943,6 +946,8 @@ tbody tr:hover,
   .release-row { grid-template-columns: 31px minmax(0, 1fr) 34px; }
   .release-row .rollout { display: none; }
   .drawer { padding-inline: 18px; }
+  .drawer[data-testid="case-drawer"] { padding-inline: 0; }
+  .drawer-body { padding-inline: 18px; }
   .drawer-actions { margin-inline: -18px; padding-inline: 18px; }
   .modal { padding-inline: 18px; }
   .modal .drawer-actions { margin-inline: -18px; }

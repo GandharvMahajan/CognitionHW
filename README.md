@@ -1,112 +1,73 @@
-# Fintech Operations Console
+# Northstar Fintech Operations Console
 
-An internal operations console for a payments company, built as a TypeScript monorepo. It contains
-three integrated back-office apps on one shared platform:
+A single internal operations workspace for:
 
-| App | What it does |
-| --- | --- |
-| **KYC Review Queue** | Searchable case queue with risk/SLA indicators, assignment, a document review workspace, approve / reject / request-info / escalate commands and full audit history. |
-| **Refunds Dashboard** | Refund metrics, filters and queue, transaction and customer history, full/partial refund requests with approval thresholds, idempotent execution through a mocked payment provider, retries and reconciliation. |
-| **Feature-Flag Admin** | Flag inventory per service and environment, enable/disable, percentage rollout, scheduling, maker-checker approval for production, rollback, change history and an emergency kill switch. |
+- KYC case intake, assignment, evidence review, documented decisions, and audit history
+- refund eligibility, maker-checker approval, idempotent submission, and reconciliation
+- feature-flag creation, environment separation, progressive rollout, immutable versions, and change evidence
 
-Every sensitive action is a **server-side command**. The browser never mutates a KYC decision, moves
-money or changes a production flag directly; it POSTs a command that the API validates, authorises,
-executes inside a transaction and records as an immutable audit event.
+The console is built as a Cloudflare Worker-compatible Vinext application. Structured workflow state is stored in D1 and protected KYC evidence is stored in R2.
 
-## Stack
+## Local security model
 
-- **pnpm workspaces** monorepo, TypeScript everywhere
-- **Express 4** command/query API with Zod validation and OpenAPI 3 docs (Swagger UI)
-- **Next.js 14** (App Router, React Server Components) + Tailwind CSS
-- **PostgreSQL 16** with **Prisma 5** migrations and a seeded demo dataset
-- **JWT** session in an HTTP-only cookie, **argon2id** password hashing, Helmet, CORS, rate limiting
-- **Vitest** (unit + API integration with Supertest) and **Playwright** (UI end-to-end)
+- The console runs locally without sign-in or sign-up screens.
+- Local operations are attributed to the fixed administrator identity `Gandharv`.
+- Mutating APIs reject cross-origin requests.
+- Production flag changes still require the local administrator role.
+- Refund approval enforces separation of duties.
+- Refund execution uses durable identifiers and idempotency keys.
+- Audit records are append-only application events.
+- Evidence uploads are limited to PDF, JPEG, and PNG files up to 10 MB.
+- Cardholder data and secrets must never be stored in this application.
 
-```
-apps/
-  api/     Express API: auth, KYC, refunds, flags, audit, notifications, background jobs
-  web/     Next.js operations console
-  e2e/     Playwright end-to-end specs
-packages/
-  domain/  Roles, permissions, workflow state machines, approval policies, Zod schemas
-  db/      Prisma schema, migrations, seed script, generated client
-  ui/      Shared React components (buttons, tables, badges, layout primitives)
-```
+Before connecting real financial systems or exposing the console beyond localhost, add organization-managed authentication and authorization, replace the demonstration processor and screening data with approved provider adapters, and have compliance, security, and finance approve the operating policies.
 
-## Quick start (Docker)
+## Local development
+
+Requires Node.js 22.13 or newer.
 
 ```bash
-cp .env.example .env
-docker compose up --build
+npm install
+npm run dev
 ```
 
-- Console: http://localhost:3000
-- API: http://localhost:4000
-- API docs: http://localhost:4000/docs
-- Health: http://localhost:4000/api/health
+The local workspace initializes demonstration records so the complete workflows can be exercised without external providers.
 
-`docker compose` runs migrations and the demo seed before starting the API.
-
-## Quick start (local Node)
+## Validation
 
 ```bash
-corepack enable && corepack prepare pnpm@9.15.0 --activate
-pnpm install
-cp .env.example .env
-
-# Postgres only, if you do not have one running
-docker compose up -d postgres
-
-pnpm --filter @fintech/db exec prisma generate
-pnpm db:migrate
-pnpm db:seed
-
-pnpm dev            # API on :4000, console on :3000
+npm test
+npm run lint
 ```
 
-## Demo accounts
+The automated suite covers:
 
-Password for every account: `Password123!`
+- KYC transition policy
+- refund eligibility, thresholds, and blocking conditions
+- deterministic percentage rollout
+- fixed local identity and same-origin mutation contracts
+- maker-checker and idempotency controls
+- evidence storage constraints
+- product metadata and hosting bindings
+- absence of browser storage as an authoritative data source
 
-| Email | Roles | Can do |
-| --- | --- | --- |
-| `admin@fintech.test` | ADMIN | Everything, incl. flag creation, kill switch, high-value refunds |
-| `approver@fintech.test` | APPROVER | Approve KYC decisions, refunds and production flag changes |
-| `approver2@fintech.test` | APPROVER | Second approver (maker-checker / four-eyes scenarios) |
-| `reviewer@fintech.test` | REVIEWER | Work KYC cases, request refunds, request flag changes |
-| `reviewer2@fintech.test` | REVIEWER | Second reviewer |
-| `auditor@fintech.test` | AUDITOR | Read-only access, including the audit log |
+Browser-level verification covers:
 
-## Tests
+- KYC queue search, assignment, rationale-required approval, and audit evidence
+- evidence upload through the D1/R2 integration
+- refund creation, automatic eligibility, maker-checker approval, processor submission, and reconciliation
+- safe-off flag creation, environment isolation, precise rollout publication, and version history
+- unified audit history
+- responsive navigation and horizontal-overflow checks at a 390 × 844 viewport
 
-```bash
-pnpm lint            # eslint, zero warnings allowed
-pnpm typecheck       # tsc --noEmit in every workspace
-pnpm test:unit       # domain unit tests (Vitest)
-pnpm test:api        # API integration / authorization tests (Vitest + Supertest)
-pnpm test:e2e        # Playwright UI end-to-end (boots API + console + seeded e2e database)
-pnpm test            # everything except e2e
-```
+## Data and integration boundaries
 
-The API tests need `DATABASE_URL` to point at a throwaway database (CI uses `fintech_test`); they
-truncate and reseed between suites. `pnpm test:e2e` provisions its own `fintech_e2e` database,
-applies migrations, seeds it, then builds and boots the API and console.
+The console owns workflow state, approvals, annotations, and audit evidence. It should not become the source of truth for payment transactions, customer identity, sanctions data, accounting balances, or experiment analytics. Connect those systems through server-side provider adapters and signed webhooks.
 
-## Environment variables
+Production integrations should include:
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `DATABASE_URL` | – | PostgreSQL connection string |
-| `JWT_SECRET` | – | Session signing secret (min 16 chars) |
-| `API_PORT` | `4000` | API port |
-| `WEB_PORT` | `3000` | Console port |
-| `NEXT_PUBLIC_API_URL` | `http://localhost:4000` | API origin used by the console |
-| `API_INTERNAL_URL` | `NEXT_PUBLIC_API_URL` | Server-to-server API origin (Docker networking) |
-| `CORS_ORIGIN` | `http://localhost:3000` | Allowed browser origin |
-| `LOGIN_RATE_LIMIT_PER_MINUTE` | `10` | Login attempts per minute per IP |
-
-## Documentation
-
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) – domain model, command flow, RBAC, concurrency, jobs
-- [`docs/REQUIREMENTS-CHECKLIST.md`](docs/REQUIREMENTS-CHECKLIST.md) – every requirement mapped to its tests
-- `http://localhost:4000/docs` – interactive OpenAPI reference (raw document at `/openapi.json`)
+- an approved identity/KYC provider and sanctions-screening source
+- the payment processor and ledger
+- email or internal-notification delivery
+- organization-managed identity groups and role assignments before any non-local use
+- centralized logs, alerts, data retention, and access reviews

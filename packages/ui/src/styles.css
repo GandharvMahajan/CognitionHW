@@ -1,5 +1,0 @@
-/* Consumers import this after Tailwind's base layers. */
-.console-shell {
-  min-height: 100vh;
-  background-color: rgb(248 250 252);
-}
